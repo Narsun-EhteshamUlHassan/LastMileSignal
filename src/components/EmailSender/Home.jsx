@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Truck, CheckCircle, Phone, Mail, MapPin, Menu, X, MessageCircle, Upload, FileText, AlertCircle } from 'lucide-react';
+import EmailSender from "./EmailSender";
+
+
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,28 +51,56 @@ const Home = () => {
     }
   };
 
-  const handleUploadSubmit = () => {
-    if (!uploadData.name || !uploadData.email) {
-      alert('Please fill in your name and email!');
-      return;
-    }
-    
-    if (!uploadData.mcLetter || !uploadData.coi || !uploadData.w9Form) {
-      alert('Please upload all required documents (MC Letter, COI, and W9 Form)!');
-      return;
-    }
+  
 
-    // alert(`Thank you ${uploadData.name}! Your documents have been uploaded successfully. We'll contact you at ${uploadData.email} soon.`);
-    
-    setUploadData({
-      name: '',
-      email: '',
-      mcLetter: null,
-      coi: null,
-      w9Form: null
-    });
-    setIsUploadModalOpen(false);
+
+  const handleUploadSubmit = (e) => {
+    e.preventDefault();
+  
+    if (!uploadData.name || !uploadData.email) {
+      alert("Please fill in your name and email!");
+      return;
+    }
+  
+    if (!uploadData.mcLetter || !uploadData.coi || !uploadData.w9Form) {
+      alert("Please upload all required documents (MC Letter, COI, and W9 Form)!");
+      return;
+    }
+  
+    emailjs
+      .send(
+        "service_f9qgftd",       // ✅ your Service ID
+        "template_w6syclv",      // ✅ your Template ID
+        {
+          name: uploadData.name,
+          email: uploadData.email,
+          mcLetter: uploadData.mcLetter.name,
+          coi: uploadData.coi.name,
+          w9Form: uploadData.w9Form.name,
+        },
+        "cQSHz0slzZ-1cyHVW"      // ✅ your Public Key
+      )
+      .then(() => {
+        alert(
+          `✅ Thank you ${uploadData.name}! Your details have been sent successfully. We'll contact you at ${uploadData.email} soon.`
+        );
+  
+        setUploadData({
+          name: "",
+          email: "",
+          mcLetter: null,
+          coi: null,
+          w9Form: null,
+        });
+        setIsUploadModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("EmailJS error:", error);
+        alert("❌ Failed to send details. Please try again later.");
+      });
   };
+  
+
 
   const handleFormSubmit = () => {
     if (!formData.companyName || !formData.phoneNumber || !formData.email) {
@@ -199,7 +230,7 @@ const Home = () => {
               </ul>
               <button 
                 className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105"
-                onClick={() => alert('Ready to start? Let us help you!')}
+                onClick={() => alert('handleUploadSubmit')}
               >
                 Start Your Journey
               </button>
