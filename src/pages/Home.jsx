@@ -91,13 +91,12 @@ const Home = () => {
       <nav className="bg-orange-900 text-white px-4 py-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <Truck className="h-8 w-8 text-orange-300" />
-            <span className="text-2xl font-bold">360 LOGISTICS</span>
+            <img src="/lastmile-logo.png" alt="LastMileSignal" className="h-10 w-10 object-contain rounded-full bg-white/10" />
+            <span className="text-2xl font-bold">LastMileSignal</span>
           </div>
           <div className="hidden md:flex space-x-8">
             <a href="#home" className="hover:text-orange-300 transition duration-300 cursor-pointer">Home</a>
-            <a href="#services" className="hover:text-orange-300 transition duration-300 cursor-pointer">Services</a>
-            <a href="#about" className="hover:text-orange-300 transition duration-300 cursor-pointer">About</a>
+            <a href="#/privacy" className="hover:text-orange-300 transition duration-300 cursor-pointer">Privacy Policy</a>
             <a href="#contact" className="hover:text-orange-300 transition duration-300 cursor-pointer">Contact</a>
           </div>
           <button className="md:hidden hover:bg-orange-800 p-2 rounded transition duration-300" onClick={toggleMenu}>
@@ -108,8 +107,7 @@ const Home = () => {
           <div className="md:hidden mt-4 pb-4 border-t border-orange-800">
             <div className="flex flex-col space-y-4 mt-4">
               <a href="#home" className="hover:text-orange-300 cursor-pointer">Home</a>
-              <a href="#services" className="hover:text-orange-300 cursor-pointer">Services</a>
-              <a href="#about" className="hover:text-orange-300 cursor-pointer">About</a>
+              <a href="#/privacy" className="hover:text-orange-300 cursor-pointer">Privacy Policy</a>
               <a href="#contact" className="hover:text-orange-300 cursor-pointer">Contact</a>
             </div>
           </div>
@@ -285,7 +283,7 @@ const Home = () => {
               <h3 className="text-2xl font-bold">What is truck dispatch service?</h3>
             </div>
             <p className="text-lg mb-6">A truck dispatch services help truck drivers and owner operators who have their own trucking company manage the load booking and back-office processes of running a trucking company. Some dispatchers specialize only in booking loads, while others, like 360 Logistics, offer a wide variety of services such as invoice management and detention requests.</p>
-            <p className="text-xl font-semibold text-orange-700 mb-4">360 Logistics is your freight planning solution.</p>
+            <p className="text-xl font-semibold text-orange-700 mb-4">LastMileSignal is your freight planning solution.</p>
             <button 
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition duration-300"
               onClick={() => alert('Discover all our dispatch services!')}
@@ -372,8 +370,8 @@ const Home = () => {
           <div className="grid md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Truck className="h-8 w-8 text-orange-300" />
-                <span className="text-2xl font-bold">360 LOGISTICS</span>
+                <img src="/lastmile-logo.png" alt="LastMileSignal" className="h-10 w-10 object-contain rounded-full bg-white/10" />
+                <span className="text-2xl font-bold">LastMileSignal</span>
               </div>
               <p className="text-orange-200">The most reliable dispatch company in North America, helping truck drivers find the best paying loads.</p>
             </div>
@@ -382,8 +380,7 @@ const Home = () => {
               <h3 className="text-xl font-bold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 <li><a href="#home" className="text-orange-200 hover:text-white transition duration-300 cursor-pointer">Home</a></li>
-                <li><a href="#services" className="text-orange-200 hover:text-white transition duration-300 cursor-pointer">Services</a></li>
-                <li><a href="#about" className="text-orange-200 hover:text-white transition duration-300 cursor-pointer">About</a></li>
+                <li><a href="#/privacy" className="text-orange-200 hover:text-white transition duration-300 cursor-pointer">Privacy Policy</a></li>
                 <li><a href="#contact" className="text-orange-200 hover:text-white transition duration-300 cursor-pointer">Contact</a></li>
               </ul>
             </div>
@@ -433,7 +430,7 @@ const Home = () => {
           </div>
           
           <div className="border-t border-orange-700 mt-8 pt-8 text-center">
-            <p className="text-orange-200">© 2024 360 Logistics. All rights reserved.</p>
+            <p className="text-orange-200">© 2024 LastMileSignal. All rights reserved.</p>
             <button 
               className="mt-2 bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded transition duration-300"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
