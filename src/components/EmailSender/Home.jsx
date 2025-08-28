@@ -424,7 +424,7 @@ const Home = () => {
                   onClick={openWhatsApp}
                 >
                   <MessageCircle className="h-5 w-5" />
-                  <span>WhatsApp: +1 786-786-1277</span>
+                  <span>WhatsApp: +1 346-419-9553</span>
                 </div>
                 <div className="flex items-start space-x-3">
                   <Phone className="h-5 w-5" />

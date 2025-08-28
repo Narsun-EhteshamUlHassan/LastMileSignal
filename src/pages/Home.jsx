@@ -129,7 +129,7 @@ const Home = () => {
 
 
   const openWhatsApp = () => {
-    const phoneNumber = '17867861277';
+    const phoneNumber = '13464199553';
     const message = 'Hi! I\'m interested in your truck dispatch services.';
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -246,12 +246,7 @@ const Home = () => {
                   <span>Transparent pricing</span>
                 </li>
               </ul>
-              <button 
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105"
-                onClick={() => setIsUploadModalOpen(true)}
-              >
-                Start Your Journey
-              </button>
+              
             </div>
           </div>
         </div>
@@ -431,7 +426,7 @@ const Home = () => {
                   onClick={openWhatsApp}
                 >
                   <MessageCircle className="h-5 w-5" />
-                  <span>WhatsApp: +1 786-786-1277</span>
+                  <span>WhatsApp: +1 346-419-9553</span>
                 </div>
                 <div className="flex items-start space-x-3">
                   <Phone className="h-5 w-5" />
