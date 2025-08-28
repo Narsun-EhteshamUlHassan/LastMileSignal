@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Truck, CheckCircle, Phone, Mail, MapPin, Menu, X, MessageCircle, Upload, FileText, AlertCircle } from 'lucide-react';
-import EmailSender from "./EmailSender";
-
-
+import emailjs from '@emailjs/browser';
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,95 +18,100 @@ const Home = () => {
     coi: null,
     w9Form: null
   });
+  const [popupMessage, setPopupMessage] = useState('');
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const contactFormRef = useRef();
+  const uploadFormRef = useRef(); 
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleUploadInputChange = (e) => {
     const { name, value } = e.target;
-    setUploadData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setUploadData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileUpload = (e, fileType) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      setUploadData(prev => ({
-        ...prev,
-        [fileType]: file
-      }));
+      setUploadData(prev => ({ ...prev, [fileType]: file }));
     }
   };
 
-  
-
-
-  const handleUploadSubmit = (e) => {
+  // ---------------- Contact Form Submission ----------------
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-  
-    if (!uploadData.name || !uploadData.email) {
-      alert("Please fill in your name and email!");
-      return;
-    }
-  
-    if (!uploadData.mcLetter || !uploadData.coi || !uploadData.w9Form) {
-      alert("Please upload all required documents (MC Letter, COI, and W9 Form)!");
-      return;
-    }
-  
-    emailjs
-      .send(
-        "service_f9qgftd",       // ✅ your Service ID
-        "template_w6syclv",      // ✅ your Template ID
-        {
-          name: uploadData.name,
-          email: uploadData.email,
-          mcLetter: uploadData.mcLetter.name,
-          coi: uploadData.coi.name,
-          w9Form: uploadData.w9Form.name,
-        },
-        "cQSHz0slzZ-1cyHVW"      // ✅ your Public Key
-      )
-      .then(() => {
-        alert(
-          `✅ Thank you ${uploadData.name}! Your details have been sent successfully. We'll contact you at ${uploadData.email} soon.`
-        );
-  
-        setUploadData({
-          name: "",
-          email: "",
-          mcLetter: null,
-          coi: null,
-          w9Form: null,
-        });
-        setIsUploadModalOpen(false);
-      })
-      .catch((error) => {
-        console.error("EmailJS error:", error);
-        alert("❌ Failed to send details. Please try again later.");
-      });
-  };
-  
-
-
-  const handleFormSubmit = () => {
     if (!formData.companyName || !formData.phoneNumber || !formData.email) {
-      alert('Please fill in all required fields!');
+      setPopupMessage('❌ Please fill in all required fields!');
+      setTimeout(() => setPopupMessage(''), 3000);
       return;
     }
-    alert(`Thank you ${formData.companyName}! We'll contact you at ${formData.phoneNumber} soon.`);
-    setFormData({ companyName: '', phoneNumber: '', email: '', goals: '' });
+
+    try {
+      await emailjs.send(
+        'service_f9qgftd',
+        'template_97rlqgb',
+        {
+          user_name: formData.companyName,
+          user_email: formData.email,
+          phone: formData.phoneNumber,
+          goals: formData.goals
+        },
+        'cQSHz0slzZ-1cyHVW'
+      );
+
+      setPopupMessage('✅ Thank you! Your message has been sent.');
+      setFormData({ companyName: '', phoneNumber: '', email: '', goals: '' });
+      setTimeout(() => setPopupMessage(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setPopupMessage('❌ Failed to send message. Please try again later.');
+      setTimeout(() => setPopupMessage(''), 3000);
+    }
+  };
+
+  // ---------------- Upload Form Submission ----------------
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    
+    const form = uploadFormRef.current;
+    if (!form.name.value || !form.email.value) {
+      setPopupMessage('❌ Please fill in your name and email!');
+      setTimeout(() => setPopupMessage(''), 3000);
+      return;
+    }
+    
+    // Check if files are selected
+    if (!form.mcLetter.files[0] || !form.coi.files[0] || !form.w9Form.files[0]) {
+      setPopupMessage('❌ Please upload all required documents!');
+      setTimeout(() => setPopupMessage(''), 3000);
+      //return;
+    }
+
+    try {
+      await emailjs.sendForm(
+        'service_f9qgftd',
+        'template_97rlqgb',
+        form,
+        'cQSHz0slzZ-1cyHVW'
+      );
+
+      setPopupMessage(`✅ Thank you ${form.name.value}! Documents uploaded successfully.`);
+      // Reset form fields and close modal
+      form.reset();
+      setIsUploadModalOpen(false);
+      // Reset state to reflect form reset (optional but good practice)
+      setUploadData({ name: '', email: '', mcLetter: null, coi: null, w9Form: null });
+      setTimeout(() => setPopupMessage(''), 4000);
+    } catch (err) {
+      console.error(err);
+      setPopupMessage('❌ Failed to send documents. Please try again later.');
+      setTimeout(() => setPopupMessage(''), 4000);
+    }
   };
 
   const openWhatsApp = () => {
@@ -117,6 +120,7 @@ const Home = () => {
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  
   return (
     <div className="min-h-screen bg-white">
       <nav className="bg-orange-900 text-white px-4 py-4 shadow-lg">
@@ -173,7 +177,7 @@ const Home = () => {
                 <h3 className="text-2xl font-bold mb-4">A Bigger Equipment makes you more Money!</h3>
                 <button 
                   className="bg-orange-500 hover:bg-orange-400 px-6 py-2 rounded transition duration-300"
-                  onClick={() => alert('Learn more about our equipment solutions!')}
+                  onClick={() => setPopupMessage('Learn more about our equipment solutions!')}
                 >
                   Learn More
                 </button>
@@ -190,7 +194,7 @@ const Home = () => {
                 <p className="text-gray-700 text-lg mb-4">Maximize your earning potential with larger equipment capacity. Our dispatch service focuses on finding high-paying loads that match your truck specifications.</p>
                 <button 
                   className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded transition duration-300"
-                  onClick={() => alert('Contact us for equipment consultation!')}
+                  onClick={() => setPopupMessage('Contact us for equipment consultation!')}
                 >
                   Get Consultation
                 </button>
@@ -230,7 +234,7 @@ const Home = () => {
               </ul>
               <button 
                 className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105"
-                onClick={() => alert('handleUploadSubmit')}
+                onClick={() => setIsUploadModalOpen(true)}
               >
                 Start Your Journey
               </button>
@@ -247,7 +251,7 @@ const Home = () => {
               <div 
                 key={index} 
                 className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer transform hover:-translate-y-2 border-t-4 border-orange-500"
-                onClick={() => alert(`Read more about ${company}'s success story!`)}
+                onClick={() => setPopupMessage(`Read more about ${company}'s success story!`)}
               >
                 <div className="flex items-center mb-3">
                   <Truck className="h-6 w-6 text-orange-600 mr-2" />
@@ -276,8 +280,6 @@ const Home = () => {
           </div>
           <h3 className="text-xl font-bold mb-4 text-orange-900">{item.title}</h3>
           <p className="text-gray-600 mb-4">{item.description}</p>
-
-          {/* Show button only for Step 1 */}
           {item.step === 1 && (
             <button 
               className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition duration-300 transform hover:scale-105"
@@ -292,7 +294,6 @@ const Home = () => {
   </div>
 </section>
 
-
       <section className="py-16 bg-orange-900 text-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -301,7 +302,7 @@ const Home = () => {
             <p className="text-lg max-w-4xl mx-auto">There are NO contracts. It is difficult to be profitable and that is why we charge only a small Percentage Fee for any premium load we find. Other dispatchers and brokers charge much higher fees and do not care about the service they provide to their drivers, we believe in long term relationships, our main focus is a great truck dispatch and customer service.</p>
             <button 
               className="mt-6 bg-orange-500 hover:bg-orange-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-300"
-              onClick={() => alert('Learn more about our no-contract policy!')}
+              onClick={() => setPopupMessage('Learn about our no-contract policy!')}
             >
               Learn About Our Policy
             </button>
@@ -316,7 +317,7 @@ const Home = () => {
             <p className="text-xl font-semibold text-orange-700 mb-4">LastMileSignal is your freight planning solution.</p>
             <button 
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition duration-300"
-              onClick={() => alert('Discover all our dispatch services!')}
+              onClick={() => setPopupMessage('Explore Services')}
             >
               Explore Services
             </button>
@@ -478,6 +479,14 @@ const Home = () => {
         <MessageCircle className="h-6 w-6" />
       </div>
 
+      {popupMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+            <p className="text-lg font-semibold text-gray-800">{popupMessage}</p>
+          </div>
+        </div>
+      )}
+
       {isUploadModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -502,7 +511,7 @@ const Home = () => {
               </button>
             </div>
 
-            <div className="p-6">
+            <form ref={uploadFormRef} onSubmit={handleUploadSubmit} className="p-6">
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -550,6 +559,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="mcLetter"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'mcLetter')}
                           className="hidden"
@@ -576,6 +586,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="coi"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'coi')}
                           className="hidden"
@@ -602,6 +613,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="w9Form"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'w9Form')}
                           className="hidden"
@@ -642,13 +654,14 @@ const Home = () => {
 
                 <div className="flex justify-center space-x-4 pt-4">
                   <button
+                    type="button"
                     onClick={() => setIsUploadModalOpen(false)}
                     className="px-6 py-3 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition duration-300"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleUploadSubmit}
+                    type="submit"
                     className="px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition duration-300 transform hover:scale-105 flex items-center"
                   >
                     <Upload className="mr-2 h-5 w-5" />
@@ -664,7 +677,7 @@ const Home = () => {
                   <p className="mt-2 text-orange-600">All documents must be clear and readable. Accepted formats: PDF, DOC, DOCX, JPG, PNG</p>
                 </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

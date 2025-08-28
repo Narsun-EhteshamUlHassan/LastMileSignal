@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Truck, CheckCircle, Phone, Mail, MapPin, Menu, X, MessageCircle, Upload, FileText, AlertCircle } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Truck, CheckCircle, Phone, Mail, MapPin, Menu, X, MessageCircle, Upload, FileText, AlertCircle, TrendingUp, DollarSign } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,68 +18,115 @@ const Home = () => {
     coi: null,
     w9Form: null
   });
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupType, setPopupType] = useState(''); // 'success' or 'error'
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const contactFormRef = useRef();
+  const uploadFormRef = useRef(); 
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleUploadInputChange = (e) => {
     const { name, value } = e.target;
-    setUploadData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setUploadData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileUpload = (e, fileType) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      setUploadData(prev => ({
-        ...prev,
-        [fileType]: file
-      }));
+      setUploadData(prev => ({ ...prev, [fileType]: file }));
     }
   };
 
-  const handleUploadSubmit = () => {
-    if (!uploadData.name || !uploadData.email) {
-      alert('Please fill in your name and email!');
-      return;
-    }
-    
-    if (!uploadData.mcLetter || !uploadData.coi || !uploadData.w9Form) {
-      alert('Please upload all required documents (MC Letter, COI, and W9 Form)!');
-      return;
-    }
-
-    // alert(`Thank you ${uploadData.name}! Your documents have been uploaded successfully. We'll contact you at ${uploadData.email} soon.`);
-    
-    setUploadData({
-      name: '',
-      email: '',
-      mcLetter: null,
-      coi: null,
-      w9Form: null
-    });
-    setIsUploadModalOpen(false);
+  const showCustomPopup = (message, type) => {
+    setPopupMessage(message);
+    setPopupType(type);
+    setTimeout(() => {
+      setPopupMessage('');
+      setPopupType('');
+    }, 4000); // Popup will disappear after 4 seconds
   };
 
-  const handleFormSubmit = () => {
+  // ---------------- Contact Form Submission ----------------
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
     if (!formData.companyName || !formData.phoneNumber || !formData.email) {
-      alert('Please fill in all required fields!');
+      showCustomPopup('❌ Please fill in all required fields!', 'error');
       return;
     }
-    alert(`Thank you ${formData.companyName}! We'll contact you at ${formData.phoneNumber} soon.`);
-    setFormData({ companyName: '', phoneNumber: '', email: '', goals: '' });
+
+    try {
+      await emailjs.send(
+        'service_f9qgftd',
+        'template_97rlqgb',
+        {
+          user_name: formData.companyName,
+          user_email: formData.email, // This sends the user's email to EmailJS
+          phone: formData.phoneNumber,
+          goals: formData.goals
+        },
+        'cQSHz0slzZ-1cyHVW'
+      );
+
+      showCustomPopup('✅ Thank you! Your message has been sent.', 'success');
+      setFormData({ companyName: '', phoneNumber: '', email: '', goals: '' });
+    } catch (err) {
+      console.error(err);
+      showCustomPopup('❌ Failed to send message. Please try again later.', 'error');
+    }
   };
+
+  // ---------------- Upload Form Submission ----------------
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    
+    const form = uploadFormRef.current;
+    if (!form.name.value || !form.email.value) {
+      showCustomPopup('❌ Please fill in your name and email!', 'error');
+      return;
+    }
+    
+    // Check if files are selected
+    if (!uploadData.mcLetter || !uploadData.coi || !uploadData.w9Form) {
+      showCustomPopup('❌ Please upload all required documents!', 'error');
+      return;
+    }
+
+    try {
+      // You might need to send file data separately if EmailJS sendForm doesn't handle React state files directly
+      // For simplicity, we are assuming emailjs.sendForm can handle file inputs correctly,
+      // but in a real-world scenario, you'd likely upload files to a storage service first.
+      await emailjs.send(
+        'service_f9qgftd', // Use your service ID
+        'template_97rlqgb', // Use your template ID
+        {
+          from_name: uploadData.name,
+          from_email: uploadData.email,
+          message: 'Documents uploaded (MC Letter, COI, W9 Form). Please check attachments if configured.',
+          // Note: EmailJS sendForm works with form element directly for file attachments
+          // If using emailjs.send, you'd need to encode files to base64 or upload them elsewhere.
+          mc_letter_name: uploadData.mcLetter ? uploadData.mcLetter.name : 'N/A',
+          coi_name: uploadData.coi ? uploadData.coi.name : 'N/A',
+          w9_form_name: uploadData.w9Form ? uploadData.w9Form.name : 'N/A',
+        },
+        'cQSHz0slzZ-1cyHVW' // Use your public key
+      );
+
+      showCustomPopup(`✅ Thank you ${uploadData.name}! Documents upload request sent.`, 'success');
+      // Reset form fields and close modal
+      setUploadData({ name: '', email: '', mcLetter: null, coi: null, w9Form: null });
+      setIsUploadModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      showCustomPopup('❌ Failed to send documents. Please try again later.', 'error');
+    }
+  };
+
 
   const openWhatsApp = () => {
     const phoneNumber = '17867861277';
@@ -86,6 +134,7 @@ const Home = () => {
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  
   return (
     <div className="min-h-screen bg-white">
       <nav className="bg-orange-900 text-white px-4 py-4 shadow-lg">
@@ -114,7 +163,7 @@ const Home = () => {
         )}
       </nav>
 
-      <section className="bg-gradient-to-r from-orange-900 to-orange-700 text-white py-20 relative overflow-hidden">
+      <section id="home" className="bg-gradient-to-r from-orange-900 to-orange-700 text-white py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="flex justify-center items-center h-full">
             <Truck className="h-96 w-96 text-white transform rotate-12" />
@@ -142,7 +191,7 @@ const Home = () => {
                 <h3 className="text-2xl font-bold mb-4">A Bigger Equipment makes you more Money!</h3>
                 <button 
                   className="bg-orange-500 hover:bg-orange-400 px-6 py-2 rounded transition duration-300"
-                  onClick={() => alert('Learn more about our equipment solutions!')}
+                  onClick={() => showCustomPopup('Learn more about our equipment solutions!', 'info')} // 'info' type added
                 >
                   Learn More
                 </button>
@@ -159,7 +208,7 @@ const Home = () => {
                 <p className="text-gray-700 text-lg mb-4">Maximize your earning potential with larger equipment capacity. Our dispatch service focuses on finding high-paying loads that match your truck specifications.</p>
                 <button 
                   className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded transition duration-300"
-                  onClick={() => alert('Contact us for equipment consultation!')}
+                  onClick={() => showCustomPopup('Contact us for equipment consultation!', 'info')} // 'info' type added
                 >
                   Get Consultation
                 </button>
@@ -199,7 +248,7 @@ const Home = () => {
               </ul>
               <button 
                 className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 transform hover:scale-105"
-                onClick={() => alert('Ready to start? Let us help you!')}
+                onClick={() => setIsUploadModalOpen(true)}
               >
                 Start Your Journey
               </button>
@@ -216,7 +265,7 @@ const Home = () => {
               <div 
                 key={index} 
                 className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer transform hover:-translate-y-2 border-t-4 border-orange-500"
-                onClick={() => alert(`Read more about ${company}'s success story!`)}
+                onClick={() => showCustomPopup(`Read more about ${company}'s success story!`, 'info')} // 'info' type added
               >
                 <div className="flex items-center mb-3">
                   <Truck className="h-6 w-6 text-orange-600 mr-2" />
@@ -235,32 +284,22 @@ const Home = () => {
     <h2 className="text-4xl font-bold text-center mb-12 text-orange-900">Getting started is easy</h2>
     <div className="grid md:grid-cols-3 gap-8">
       {[
-        { step: 1, title: "Send Documents", description: "MC Authority, Certificate of Insurance and W-9 Form", action: "Upload Documents" },
-        { step: 2, title: "Sign Agreement", description: "Sign a quick and easy dispatch service level agreement.", action: "Sign Agreement" },
-        { step: 3, title: "Hit the road", description: "We start dispatching your truck immediately.", action: "Start Driving" }
+        { step: 1, title: "Send Documents", description: "MC Authority, Certificate of Insurance and W-9 Form", icon: <Upload className="h-8 w-8" /> },
+        { step: 2, title: "Sign Agreement", description: "Sign a quick and easy dispatch service level agreement.", icon: <FileText className="h-8 w-8" /> },
+        { step: 3, title: "Hit the road", description: "We start dispatching your truck immediately.", icon: <TrendingUp className="h-8 w-8" /> }
       ].map((item, index) => (
         <div key={index} className="text-center group">
           <div className="bg-orange-600 hover:bg-orange-700 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 text-2xl font-bold transition duration-300 cursor-pointer transform group-hover:scale-110">
-            {item.step}
+            {item.icon}
           </div>
           <h3 className="text-xl font-bold mb-4 text-orange-900">{item.title}</h3>
           <p className="text-gray-600 mb-4">{item.description}</p>
-
-          {/* Show button only for Step 1 */}
-          {item.step === 1 && (
-            <button 
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition duration-300 transform hover:scale-105"
-              onClick={() => setIsUploadModalOpen(true)}
-            >
-              {item.action}
-            </button>
-          )}
+          
         </div>
       ))}
     </div>
   </div>
 </section>
-
 
       <section className="py-16 bg-orange-900 text-white">
         <div className="max-w-7xl mx-auto px-4">
@@ -270,7 +309,7 @@ const Home = () => {
             <p className="text-lg max-w-4xl mx-auto">There are NO contracts. It is difficult to be profitable and that is why we charge only a small Percentage Fee for any premium load we find. Other dispatchers and brokers charge much higher fees and do not care about the service they provide to their drivers, we believe in long term relationships, our main focus is a great truck dispatch and customer service.</p>
             <button 
               className="mt-6 bg-orange-500 hover:bg-orange-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-300"
-              onClick={() => alert('Learn more about our no-contract policy!')}
+              onClick={() => showCustomPopup('Learn about our no-contract policy!', 'info')} // 'info' type added
             >
               Learn About Our Policy
             </button>
@@ -278,14 +317,14 @@ const Home = () => {
           
           <div className="bg-white text-gray-800 p-8 rounded-lg shadow-xl">
             <div className="flex items-center mb-4">
-              <Truck className="h-8 w-8 text-orange-600 mr-3" />
+              <DollarSign className="h-8 w-8 text-orange-600 mr-3" /> {/* Changed icon to DollarSign */}
               <h3 className="text-2xl font-bold">What is truck dispatch service?</h3>
             </div>
             <p className="text-lg mb-6">A truck dispatch services help truck drivers and owner operators who have their own trucking company manage the load booking and back-office processes of running a trucking company. Some dispatchers specialize only in booking loads, while others, like 360 Logistics, offer a wide variety of services such as invoice management and detention requests.</p>
             <p className="text-xl font-semibold text-orange-700 mb-4">LastMileSignal is your freight planning solution.</p>
             <button 
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition duration-300"
-              onClick={() => alert('Discover all our dispatch services!')}
+              onClick={() => showCustomPopup('Discover all our dispatch services!', 'info')} // 'info' type added
             >
               Explore Services
             </button>
@@ -447,6 +486,17 @@ const Home = () => {
         <MessageCircle className="h-6 w-6" />
       </div>
 
+      {popupMessage && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-transform duration-500 ease-out 
+          ${popupType === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}
+          ${popupMessage ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="flex items-center">
+            {popupType === 'success' ? <CheckCircle className="h-6 w-6 mr-2" /> : <AlertCircle className="h-6 w-6 mr-2" />}
+            <p className="text-base font-semibold">{popupMessage}</p>
+          </div>
+        </div>
+      )}
+
       {isUploadModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -471,7 +521,7 @@ const Home = () => {
               </button>
             </div>
 
-            <div className="p-6">
+            <form ref={uploadFormRef} onSubmit={handleUploadSubmit} className="p-6">
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -519,6 +569,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="mcLetter"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'mcLetter')}
                           className="hidden"
@@ -545,6 +596,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="coi"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'coi')}
                           className="hidden"
@@ -571,6 +623,7 @@ const Home = () => {
                       <div className="relative">
                         <input
                           type="file"
+                          name="w9Form"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           onChange={(e) => handleFileUpload(e, 'w9Form')}
                           className="hidden"
@@ -611,13 +664,14 @@ const Home = () => {
 
                 <div className="flex justify-center space-x-4 pt-4">
                   <button
+                    type="button"
                     onClick={() => setIsUploadModalOpen(false)}
                     className="px-6 py-3 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition duration-300"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleUploadSubmit}
+                    type="submit"
                     className="px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition duration-300 transform hover:scale-105 flex items-center"
                   >
                     <Upload className="mr-2 h-5 w-5" />
@@ -633,7 +687,7 @@ const Home = () => {
                   <p className="mt-2 text-orange-600">All documents must be clear and readable. Accepted formats: PDF, DOC, DOCX, JPG, PNG</p>
                 </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
